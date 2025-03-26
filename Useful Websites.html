@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Descriptor Manager</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        input, button, select { margin: 5px; padding: 8px; }
+        .search-container { display: flex; align-items: center; }
+        .search-container label { margin-right: 10px; }
+        #search { flex-grow: 1; }
+    </style>
+</head>
+<body>
+    <h2><u>Useful Websites Manager</u></h2>
+    
+    <br>
+
+    <h3>Add a New Website:</h3>
+    <p> Add a new useful website by entering the URL in the first box below and then entering several keyword descriptors separated by commas. Ex: "Weather.gov" (URL) followed by "weather, alerts, NOAA" (Descriptors) </p>
+    <label for="url">Website URL:</label>
+    <input type="text" id="url">
+    <label for="descriptor">Descriptors (comma-separated):</label>
+    <input type="text" id="descriptor">
+    <button onclick="addWebsite()">Add</button>
+
+    <br><br><br>
+    
+    <h3>Search Existing Websites:</h3>
+    <p> Search for useful websites by selecting a keyword from the list below </p>
+    <label for="search">Search Descriptors:</label>
+    <select id="search" multiple></select>
+    <button onclick="searchWebsites()">Search</button>
+    
+    <br><br><br>
+
+    <h3>Search Results:</h3>
+    <ul id="results"></ul>
+
+    <script>
+        let websiteMap = JSON.parse(localStorage.getItem('websiteMap')) || {};
+        updateDropdown();
+        
+        function addWebsite() {
+            let descriptors = document.getElementById('descriptor').value.trim().split(',').map(d => d.trim());
+            let url = document.getElementById('url').value.trim();
+            if (descriptors.length === 0 || !url) return;
+            
+            descriptors.forEach(descriptor => {
+                if (!websiteMap[descriptor]) {
+                    websiteMap[descriptor] = [];
+                }
+                if (!websiteMap[descriptor].includes(url)) {
+                    websiteMap[descriptor].push(url);
+                }
+            });
+            
+            localStorage.setItem('websiteMap', JSON.stringify(websiteMap));
+            updateDropdown();
+            alert('Website added!');
+            
+            // Clear input fields
+            document.getElementById('url').value = '';
+            document.getElementById('descriptor').value = '';
+        }
+        
+        function updateDropdown() {
+            let searchDropdown = document.getElementById('search');
+            searchDropdown.innerHTML = '';
+            
+            let sortedKeys = Object.keys(websiteMap).sort();
+            sortedKeys.forEach(key => {
+                let option = document.createElement('option');
+                option.value = key;
+                option.textContent = key;
+                searchDropdown.appendChild(option);
+            });
+        }
+        
+        function searchWebsites() {
+            let selectedOptions = Array.from(document.getElementById('search').selectedOptions).map(option => option.value);
+            let resultsList = document.getElementById('results');
+            resultsList.innerHTML = '';
+            
+            let uniqueUrls = new Set();
+            selectedOptions.forEach(searchKey => {
+                if (websiteMap[searchKey]) {
+                    websiteMap[searchKey].forEach(url => uniqueUrls.add(url));
+                }
+            });
+            
+            if (uniqueUrls.size > 0) {
+                uniqueUrls.forEach(url => {
+                    let li = document.createElement('li');
+                    let a = document.createElement('a');
+                    a.href = url;
+                    a.textContent = url;
+                    a.target = "_blank";
+                    li.appendChild(a);
+                    resultsList.appendChild(li);
+                });
+            } else {
+                resultsList.innerHTML = '<li>No websites found for these descriptors.</li>';
+            }
+        }
+    </script>
+</body>
+</html>
